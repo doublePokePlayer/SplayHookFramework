@@ -15,7 +15,7 @@ public abstract class ImGuiHookBase(string name) : SplayHook(name)
     /// <summary>
     /// 窗口句柄
     /// </summary>
-    public IntPtr WindowHandle { get; set; }
+    public static IntPtr WindowHandle { get; set; }
 
     protected static WndProcDelegate NewWndProc = WndProcImpl;
 
@@ -24,6 +24,8 @@ public abstract class ImGuiHookBase(string name) : SplayHook(name)
     /// Resize后也要重新初始化
     /// </summary>
     public bool Inited { get; protected set; }
+
+    public static bool Open = true;
 
     /// <summary>
     /// 渲染之前
@@ -40,10 +42,10 @@ public abstract class ImGuiHookBase(string name) : SplayHook(name)
     /// </summary>
     protected abstract void PreResize();
 
-    /// <summary>
-    /// Resize时执行
-    /// </summary>
-    protected abstract void Resize();
+    // /// <summary>
+    // /// Resize时执行
+    // /// </summary>
+    // protected abstract void Resize();
 
     /// <summary>
     /// Resize之后

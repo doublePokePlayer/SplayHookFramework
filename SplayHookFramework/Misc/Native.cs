@@ -47,6 +47,49 @@ public static class Native
 
     #endregion
 
+    #region 窗口消息
+
+    /// <summary>
+    /// 获取低16位
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
+    public static short LowWord(IntPtr input)
+    {
+        return (short)input;
+    }
+
+    /// <summary>
+    /// 获取高16位
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
+    public static short HighWord(IntPtr input)
+    {
+        return (short)(input >> 16);
+    }
+
+    /// <summary>
+    /// 从lParam解析X坐标
+    /// </summary>
+    /// <param name="lParam"></param>
+    /// <returns></returns>
+    public static short GetXlParam(IntPtr lParam)
+    {
+        return LowWord(lParam);
+    }
+
+    /// <summary>
+    /// 从lParam解析Y坐标
+    /// </summary>
+    /// <param name="lParam"></param>
+    /// <returns></returns>
+    public static short GetYlParam(IntPtr lParam)
+    {
+        return HighWord(lParam);
+    }
+
+    #endregion
 
     public static IntPtr GetWindowLong(IntPtr hWnd, GWL nIndex)
     {

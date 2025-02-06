@@ -95,10 +95,17 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
                 device?.Release();
 
                 var presentPtr = SwapChainVTable[8].FunctionPointer;
+                var resizeBufferPtr = SwapChainVTable[13].FunctionPointer;
 
                 _presentHook = ISplayHook.InternalHooks.CreateHook<Present>(
                     (delegate* unmanaged[Stdcall]<IntPtr, uint, uint, IntPtr>)&PresentImplStatic,
                     presentPtr
+                ).Activate();
+
+                _resizeBuffersHook = ISplayHook.InternalHooks.CreateHook<ResizeBuffers>(
+                    (delegate* unmanaged[Stdcall]<IntPtr, uint, uint, uint, Format, uint, IntPtr>)
+                    &ResizeBuffersImplStatic,
+                    resizeBufferPtr
                 ).Activate();
             }
             else
@@ -204,7 +211,8 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
             }
 
             PreRender();
-            ImGuiNET.ImGui.ShowDemoWindow();
+
+            ImGuiNET.ImGui.ShowDemoWindow(ref Open);
 
             PostRender();
         }
@@ -226,12 +234,13 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
             .Render(swapChainPtr, syncInterval, flags);
     }
 
-    // [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
-    // private static IntPtr ResizeBuffersImplStatic(IntPtr swapChainPtr, uint bufferCount, uint width, uint height,
-    //     Format newFormat, uint swapChainFlags)
-    // {
-    //     return Instance.ResizeBuffersImpl(swapChainPtr, bufferCount, width, height, newFormat, swapChainFlags);
-    // }
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
+    private static IntPtr ResizeBuffersImplStatic(IntPtr swapChainPtr, uint bufferCount, uint width, uint height,
+        Format newFormat, uint swapChainFlags)
+    {
+        return ISplayHook.HooksDictionary[nameof(ImGuiDx11Hook)].As<ImGuiDx11Hook>()
+            .Resize(swapChainPtr, bufferCount, width, height, newFormat, swapChainFlags);
+    }
 
     #endregion
 
@@ -246,18 +255,41 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
     protected override void PreResize()
     {
         // 恢复窗口过程
-        // SetWindowLongPtr(WindowHandle, (int)GWL.GWL_WNDPROC,);
+        SetWindowLongPtr(WindowHandle, (int)GWL.GWL_WNDPROC, WndProcHook.OriginalWndProc);
         if (Inited)
         {
             Inited = false;
             ImGuiNET.ImGui.ImGui_ImplDX11_Shutdown();
             ImGuiNET.ImGui.ImGui_ImplWin32_Shutdown();
             ImGuiNET.ImGui.DestroyContext();
+
+            _device?.Release();
+            _deviceContext?.Release();
+            _renderTargetView?.Release();
         }
     }
 
-    protected override void Resize()
+    /// <summary>
+    /// Resize函数Hook实现
+    /// </summary>
+    /// <param name="swapChain"></param>
+    /// <param name="bufferCount"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="newFormat"></param>
+    /// <param name="swapChainFlags"></param>
+    /// <returns></returns>
+    protected unsafe IntPtr Resize(IntPtr swapChain, uint bufferCount, uint width, uint height, Format newFormat,
+        uint swapChainFlags)
     {
+        PreResize();
+
+        var res = _resizeBuffersHook.OriginalFunction.Value.Invoke(swapChain, bufferCount, width, height, newFormat,
+            swapChainFlags);
+
+        PostResize();
+
+        return res;
     }
 
     protected override void PostResize()
