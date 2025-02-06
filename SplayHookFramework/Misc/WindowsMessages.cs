@@ -161,7 +161,7 @@ public enum WindowMessage : uint
     WM_CANCELMODE = 0x001F,
 
     /// <summary>
-    /// The WM_SETCURSOR message is sent to a window if the mouse causes the cursor to move within a window and mouse input is not captured.
+    /// 如果鼠标导致光标在窗口中移动，并且未捕获鼠标输入，则发送到窗口。
     /// </summary>
     WM_SETCURSOR = 0x0020,
 
@@ -405,9 +405,9 @@ public enum WindowMessage : uint
     WM_NCCALCSIZE = 0x0083,
 
     /// <summary>
-    /// The WM_NCHITTEST message is sent to a window when the cursor moves, or when a mouse button is pressed or released. If the
-    /// mouse is not captured, the message is sent to the window beneath the cursor. Otherwise, the message is sent to the window
-    /// that has captured the mouse.
+    /// 发送到窗口以确定窗口的哪个部分对应于特定的屏幕坐标。
+    /// 例如，当光标移动、按下或释放鼠标按钮或响应对 WindowFromPoint 等函数的调用时，可能会发生这种情况。
+    /// 如果未捕获鼠标，则会将消息发送到光标下方的窗口。 否则，消息将发送到已捕获鼠标的窗口。
     /// </summary>
     WM_NCHITTEST = 0x0084,
 
@@ -449,8 +449,7 @@ public enum WindowMessage : uint
     WM_UAHNCPAINTMENUPOPUP = 0x0095,
 
     /// <summary>
-    /// The WM_NCMOUSEMOVE message is posted to a window when the cursor is moved within the nonclient area of the window. This
-    /// message is posted to the window that contains the cursor. If a window has captured the mouse, this message is not posted.
+    /// 光标移动时发布到窗口。 如果未捕获鼠标，消息将发布到包含光标的窗口。 否则，消息将发布到已捕获鼠标的窗口。
     /// </summary>
     WM_NCMOUSEMOVE = 0x00A0,
 
@@ -553,24 +552,18 @@ public enum WindowMessage : uint
     /// <summary>The WM_INPUT message is sent to the window that is getting raw input.</summary>
     WM_INPUT = 0x00FF,
 
-    /// <summary>This message filters for keyboard messages.</summary>
-    WM_KEYFIRST = 0x0100,
-
     /// <summary>
-    /// The WM_KEYDOWN message is posted to the window with the keyboard focus when a nonsystem key is pressed. A nonsystem key is a
-    /// key that is pressed when the ALT key is not pressed.
+    /// 按下非系统键时，使用键盘焦点发布到窗口。 非系统键是在未按下 ALT 键时按下的键。
     /// </summary>
     WM_KEYDOWN = 0x0100,
 
     /// <summary>
-    /// The WM_KEYUP message is posted to the window with the keyboard focus when a nonsystem key is released. A nonsystem key is a
-    /// key that is pressed when the ALT key is not pressed, or a keyboard key that is pressed when a window has the keyboard focus.
+    /// 非系统键被释放时，发布到具有键盘焦点的窗口。 非系统键是未按下 ALT 键的情况下按下的键，或者当窗口具有键盘焦点时按下的键盘键。
     /// </summary>
     WM_KEYUP = 0x0101,
 
     /// <summary>
-    /// The WM_CHAR message is posted to the window with the keyboard focus when a WM_KEYDOWN message is translated by the
-    /// TranslateMessage function. The WM_CHAR message contains the character code of the key that was pressed.
+    /// 在 TranslateMessage 函数对 WM_KEYDOWN 消息进行转换后发布给具有键盘焦点的窗口。 WM_CHAR 消息包含所按的键的字符代码。
     /// </summary>
     WM_CHAR = 0x0102,
 
@@ -785,9 +778,6 @@ public enum WindowMessage : uint
     /// </summary>
     WM_CTLCOLORSTATIC = 0x0138,
 
-    /// <summary>Use WM_MOUSEFIRST to specify the first mouse message. Use the PeekMessage() Function.</summary>
-    WM_MOUSEFIRST = 0x0200,
-
     /// <summary>
     /// The WM_MOUSEMOVE message is posted to a window when the cursor moves. If the mouse is not captured, the message is posted to
     /// the window that contains the cursor. Otherwise, the message is posted to the window that has captured the mouse.
@@ -923,7 +913,7 @@ public enum WindowMessage : uint
     /// </summary>
     WM_SIZING = 0x0214,
 
-    /// <summary>The WM_CAPTURECHANGED message is sent to the window that is losing the mouse capture.</summary>
+    /// <summary>发送到丢失鼠标捕获的窗口。</summary>
     WM_CAPTURECHANGED = 0x0215,
 
     /// <summary>
@@ -1089,8 +1079,7 @@ public enum WindowMessage : uint
     WM_MOUSEHOVER = 0x02A1,
 
     /// <summary>
-    /// The WM_MOUSELEAVE message is posted to a window when the cursor leaves the client area of the window specified in a prior
-    /// call to TrackMouseEvent.
+    /// 当光标离开之前调用 TrackMouseEvent 中指定的窗口工作区时，发布到窗口。
     /// </summary>
     WM_MOUSELEAVE = 0x02A3,
 
@@ -1232,8 +1221,7 @@ public enum WindowMessage : uint
     WM_PALETTECHANGED = 0x0311,
 
     /// <summary>
-    /// The WM_HOTKEY message is posted when the user presses a hot key registered by the RegisterHotKey function. The message is
-    /// placed at the top of the message queue associated with the thread that registered the hot key.
+    /// 在用户按下通过 RegisterHotKey 函数注册的热键时发送。 此消息放置在与注册了热键的线程关联的消息队列的顶部。
     /// </summary>
     WM_HOTKEY = 0x0312,
 

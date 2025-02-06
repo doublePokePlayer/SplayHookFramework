@@ -4,16 +4,36 @@ namespace SplayHookFramework.Misc;
 
 public static class Native
 {
+    [DllImport("user32.dll", EntryPoint = "GetAsyncKeyState")]
+    public static extern short GetAsyncKeyState(int vKey);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool FreeLibrary(IntPtr hModule);
+
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr CreateThread(
+        uint lpThreadAttributes,
+        uint dwStackSize,
+        IntPtr lpStartAddress,
+        IntPtr param,
+        uint dwCreationFlags,
+        ref uint lpThreadId
+    );
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool CloseHandle(IntPtr hObject);
+
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
     public static extern IntPtr GetModuleHandle(string lpModuleName);
 
+    [DllImport("kernel32", SetLastError = true)]
+    public static extern void FreeLibraryAndExitThread(IntPtr hModule, int exitCode);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern bool DisableThreadLibraryCalls(IntPtr hModule);
-
 
     [DllImport("kernel32.dll")]
     public static extern bool FreeConsole();
@@ -47,6 +67,49 @@ public static class Native
 
     #endregion
 
+    #region 窗口消息
+
+    /// <summary>
+    /// 获取低16位
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
+    public static short LowWord(IntPtr input)
+    {
+        return (short)input;
+    }
+
+    /// <summary>
+    /// 获取高16位
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
+    public static short HighWord(IntPtr input)
+    {
+        return (short)(input >> 16);
+    }
+
+    /// <summary>
+    /// 从lParam解析X坐标
+    /// </summary>
+    /// <param name="lParam"></param>
+    /// <returns></returns>
+    public static short GetXlParam(IntPtr lParam)
+    {
+        return LowWord(lParam);
+    }
+
+    /// <summary>
+    /// 从lParam解析Y坐标
+    /// </summary>
+    /// <param name="lParam"></param>
+    /// <returns></returns>
+    public static short GetYlParam(IntPtr lParam)
+    {
+        return HighWord(lParam);
+    }
+
+    #endregion
 
     public static IntPtr GetWindowLong(IntPtr hWnd, GWL nIndex)
     {
