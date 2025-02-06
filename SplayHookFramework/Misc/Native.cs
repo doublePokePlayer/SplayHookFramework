@@ -4,16 +4,37 @@ namespace SplayHookFramework.Misc;
 
 public static class Native
 {
+    [DllImport("user32.dll", EntryPoint = "GetAsyncKeyState")]
+    public static extern short GetAsyncKeyState(int vKey);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool FreeLibrary(IntPtr hModule);
+
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr CreateThread(
+        uint lpThreadAttributes,
+        uint dwStackSize,
+        IntPtr lpStartAddress,
+        IntPtr param,
+        uint dwCreationFlags,
+        ref uint lpThreadId
+    );
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool CloseHandle(IntPtr hObject);
+
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
     public static extern IntPtr GetModuleHandle(string lpModuleName);
 
+    [DllImport("kernel32", SetLastError = true)]
+    public static extern void FreeLibraryAndExitThread(IntPtr hModule, int exitCode);
+
 
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern bool DisableThreadLibraryCalls(IntPtr hModule);
-
 
     [DllImport("kernel32.dll")]
     public static extern bool FreeConsole();

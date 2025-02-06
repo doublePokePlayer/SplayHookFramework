@@ -15,10 +15,15 @@ namespace SplayHookFramework.Hooking.ImGui;
 
 public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
 {
-    // /// <summary>
-    // /// DX11 Device 虚表.
-    // /// </summary>
-    // public static IVirtualFunctionTable? DeviceVTable { get; private set; }
+    /// <summary>
+    /// Present函数在SwapChain虚表的索引下标
+    /// </summary>
+    private const int PresentIndex = 8;
+
+    /// <summary>
+    /// ResizeBuffers函数在SwapChain虚表的索引下标
+    /// </summary>
+    private const int ResizeBuffersIndex = 13;
 
     /// <summary>
     /// DX11 DXGI SwapChain 虚表.
@@ -41,7 +46,7 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
 
     private ID3D11Device? _device;
     private IDXGISwapChain _swapChain = null!;
-    private ID3D11DeviceContext _deviceContext = null!;
+    private ID3D11DeviceContext? _deviceContext;
     private ID3D11RenderTargetView _renderTargetView = null!;
 
     private IHook<Present> _presentHook = null!;
@@ -85,11 +90,10 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
 
             if (res == Result.Ok && swapChain != null)
             {
-                // DeviceVTable = ISplayHook.InternalHooks.VirtualFunctionTableFromObject(device!.NativePointer, 43);
                 SwapChainVTable = ISplayHook.InternalHooks.VirtualFunctionTableFromObject(swapChain.NativePointer, 18);
 
-                Debug.WriteLine("Present在SwapChain虚表地址: 0X" + SwapChainVTable[8].EntryAddress.ToString("X"));
-                Debug.WriteLine("ResizeBuffers在SwapChain虚表地址: 0X" + SwapChainVTable[13].EntryAddress.ToString("X"));
+                Debug.DebugWriteLine($"Present在虚表地址: 0X{SwapChainVTable[PresentIndex].EntryAddress:X}");
+                Debug.DebugWriteLine($"ResizeBuffers在虚表地址: 0X{SwapChainVTable[ResizeBuffersIndex].EntryAddress:X}");
 
                 swapChain.Release();
                 device?.Release();
@@ -119,20 +123,44 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
         }
     }
 
+    public override void Release()
+    {
+        DisableAll();
+        SetWindowLongPtr(WindowHandle, (int)GWL.GWL_WNDPROC, WndProcHook.OriginalWndProc);
+        if (Inited)
+        {
+            ImGuiNET.ImGui.ImGui_ImplDX11_Shutdown();
+            ImGuiNET.ImGui.ImGui_ImplWin32_Shutdown();
+            ImGuiNET.ImGui.DestroyContext();
+
+            _deviceContext?.Release();
+            _device?.Release();
+        }
+
+        if (GlobalSettings.UseConsole) FreeConsole();
+
+        uint _ = 0;
+        CreateThread(0, 0, Marshal.GetFunctionPointerForDelegate(new Free(FreeLibrary)),
+            GlobalSettings.DllInstance, 0, ref _);
+    }
+
+    private delegate bool Free(nint hModule);
+
     public override void Enable()
     {
         _presentHook.Enable();
-        // _resizeBuffersHook.Enable();
+        _resizeBuffersHook.Enable();
     }
 
     public override void Disable()
     {
         _presentHook.Disable();
-        // _resizeBuffersHook.Disable();
+        _resizeBuffersHook.Disable();
     }
 
     public override void Dispose()
     {
+        Release();
     }
 
     /// <summary>
@@ -173,7 +201,7 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
                     if (_device != null)
                     {
                         _deviceContext = _device.ImmediateContext;
-                        var description = _swapChain!.Description;
+                        var description = _swapChain.Description;
                         WindowHandle = description.OutputWindow;
 
                         _swapChain.GetBuffer<ID3D11Texture2D>(0, out var buf);
@@ -183,10 +211,8 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
                             _renderTargetView = _device.CreateRenderTargetView(buf);
                             buf.Release();
 
-                            var newWndProcPtr = Marshal.GetFunctionPointerForDelegate(NewWndProc);
-
                             WndProcHook.OriginalWndProc = SetWindowLongPtr(WindowHandle, (int)GWL.GWL_WNDPROC,
-                                newWndProcPtr);
+                                Marshal.GetFunctionPointerForDelegate(NewWndProc));
                         }
                         else
                         {
@@ -210,11 +236,13 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
                 Inited = true;
             }
 
-            PreRender();
 
-            ImGuiNET.ImGui.ShowDemoWindow(ref Open);
-
-            PostRender();
+            if (Open)
+            {
+                PreRender();
+                ImGuiNET.ImGui.ShowDemoWindow();
+                PostRender();
+            }
         }
         catch (Exception e)
         {
@@ -248,7 +276,7 @@ public class ImGuiDx11Hook() : ImGuiHookBase(nameof(ImGuiDx11Hook))
     {
         ImGuiNET.ImGui.EndFrame();
         ImGuiNET.ImGui.Render();
-        _deviceContext.OMSetRenderTargets(1, [_renderTargetView]);
+        _deviceContext?.OMSetRenderTargets(1, [_renderTargetView]);
         ImGuiNET.ImGui.ImGui_ImplDX11_RenderDrawData(ImGuiNET.ImGui.GetDrawData());
     }
 

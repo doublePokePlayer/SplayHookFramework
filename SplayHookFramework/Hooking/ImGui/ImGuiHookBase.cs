@@ -21,11 +21,17 @@ public abstract class ImGuiHookBase(string name) : SplayHook(name)
 
     /// <summary>
     /// 第一次调用要初始化ImGui相关
-    /// Resize后也要重新初始化
+    /// Resize后也需要重新初始化
     /// </summary>
-    public bool Inited { get; protected set; }
+    public static bool Inited { get; protected set; }
 
     public static bool Open = true;
+
+    /// <summary>
+    /// 取消Hook 释放资源
+    /// 使用了ImGui, 那就应该在不用ImGui的时候释放你的功能和画面
+    /// </summary>
+    public abstract void Release();
 
     /// <summary>
     /// 渲染之前
@@ -41,11 +47,6 @@ public abstract class ImGuiHookBase(string name) : SplayHook(name)
     /// Resize之前
     /// </summary>
     protected abstract void PreResize();
-
-    // /// <summary>
-    // /// Resize时执行
-    // /// </summary>
-    // protected abstract void Resize();
 
     /// <summary>
     /// Resize之后
